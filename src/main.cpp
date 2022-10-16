@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
-/*    Author:       Nikola Mazzola                                            */
+/*    Author:       Nikola Mazzola, Anav Bordia                               */
 /*    Created:      Monday September 10th 2022                                */
 /*    Description:  Competition Template                                      */
 /*                                                                            */
