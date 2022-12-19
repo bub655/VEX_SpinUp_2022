@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
-/*    Author:       Nikola Mazzola, Anav Bordia                               */
+/*    Author:       Anav Bordia                                               */
 /*    Created:      Monday September 10th 2022                                */
 /*    Description:  Competition Template                                      */
 /*                                                                            */
@@ -10,14 +10,18 @@
 // ---- START VEXCODE CONFIGURED DEVICES ----
 // Robot Configuration:
 // [Name]               [Type]        [Port(s)]
+// motor_lf             motor         4               
+// motor_lm             motor         5               
+// motor_lb             motor         6               
+// motor_rf             motor         7               
+// motor_rm             motor         8               
+// motor_rb             motor         9               
+// motor_suc            motor         11              
+// motor_lau            motor         13              
 // Controller1          controller                    
-// MotorLF              motor         11              
-// MotorRF              motor         16              
-// MotorLB              motor         13              
-// MotorRB              motor         14              
-// MotorSuction         motor         20              
-// MotorFlick           motor         6               
-// MotorLaunch          motor         15              
+// indexer              digital_out   A               
+// expansion            digital_out   B               
+// iner                 inertial      15              
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
@@ -27,14 +31,20 @@ using namespace vex;
 // A global instance of competition
 competition Competition;
 
-// define your global instances of motors and other devices here
-vex::motor motor_lf(PORT11,vex::gearSetting::ratio18_1);
-vex::motor motor_rf(PORT16,vex::gearSetting::ratio18_1);
-vex::motor motor_lb(PORT13,vex::gearSetting::ratio18_1);
-vex::motor motor_rb(PORT14,vex::gearSetting::ratio18_1);
-vex::motor motor_suc(PORT20,vex::gearSetting::ratio18_1);
-vex::motor motor_fli(PORT1,vex::gearSetting::ratio18_1);
-vex::motor motor_lau(PORT15,vex::gearSetting::ratio18_1);
+// define your global i[nstances of motors and other devices here
+/*
+vex::motor motor_lf(PORT6,vex::gearSetting::ratio18_1);
+vex::motor motor_rf(PORT7,vex::gearSetting::ratio18_1);
+vex::motor motor_lb(PORT5,vex::gearSetting::ratio18_1);
+vex::motor motor_rb(PORT4,vex::gearSetting::ratio18_1);
+vex::motor motor_suc(PORT10,vex::gearSetting::ratio18_1);
+vex::motor motor_fli(PORT11,vex::gearSetting::ratio18_1);
+vex::motor motor_lau1(PORT13,vex::gearSetting::ratio6_1);
+vex::motor motor_lau2(PORT14, vex::gearSetting::ratio6_1, false);
+vex::motor_group motor_lau(motor_lau1, motor_lau2);
+vex::motor motor_exp(PORT9,vex::gearSetting::ratio18_1);
+vex::controller Controller1;
+*/
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -46,7 +56,22 @@ vex::motor motor_lau(PORT15,vex::gearSetting::ratio18_1);
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
+//VARIABLE DECLARATIONS
+timer startTimer;
+bool launcherCall = false;
+bool launcherPressed = false;
+bool launcherSpeed =  100;
+bool launcherSpeedPressed = false;
+
+char suctionCall = 'n';
+bool suctionPressed1 = false;
+bool suctionPressed2 = false;
+
+bool driveLaunch = true;
+bool drivePressed = false;
+
 void pre_auton(void) {
+
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
 
@@ -55,28 +80,44 @@ void pre_auton(void) {
 }
 //MOVEMENT
 //move forwards or backwards with a given distance (in degrees) and a given speed (in rpm)
-void ahead(double num,double speed){
-  motor_lf.resetPosition();
-  motor_rf.resetPosition();
-  motor_lb.resetPosition();
-  motor_rb.resetPosition();
-  motor_lf.startRotateTo(num,deg,speed,rpm);
-  motor_rf.startRotateTo(num,deg,speed,rpm);
-  motor_lb.startRotateTo(num,deg,speed,rpm);
-  motor_rb.startRotateTo(num,deg,speed,rpm);
-  wait(10,msec);
-}
-//move sideways with a given distance (in degrees) and a given speed (in rpm)
 void side(double num,double speed){
   motor_lf.resetPosition();
   motor_rf.resetPosition();
   motor_lb.resetPosition();
   motor_rb.resetPosition();
-  motor_lf.startRotateTo(num,deg,speed,rpm);
+  motor_lf.startRotateTo(-num,deg,speed,rpm);
   motor_rf.startRotateTo(-num,deg,speed,rpm);
-  motor_lb.startRotateTo(-num,deg,speed,rpm);
-  motor_rb.startRotateTo(num,deg,speed,rpm);
+  motor_lb.startRotateTo(num,deg,speed,rpm);
+  motor_rb.spinFor(num,deg,speed,rpm);
 }
+//move sideways with a given distance (in degrees) and a given speed (in rpm)
+void ahead(double num,double speed){
+  motor_lf.resetPosition();
+  motor_rf.resetPosition();
+  motor_lb.resetPosition();
+  motor_rb.resetPosition();
+  motor_lm.resetPosition();
+  motor_rm.resetPosition();
+  motor_lf.startRotateTo(-num,deg,speed,rpm);
+  motor_rf.startRotateTo(num,deg,speed,rpm);
+  motor_lm.startRotateTo(-num,deg,speed,rpm);
+  motor_rm.startRotateTo(num,deg,speed,rpm);
+  motor_lb.startRotateTo(-num,deg,speed,rpm);
+  motor_rb.spinFor(num,deg,speed,rpm);
+}
+
+//move sideways with a given distance (in degrees) and a given speed (in rpm)
+void ahead2(double time){
+  motor_lf.resetPosition();
+  motor_rf.resetPosition();
+  motor_lb.resetPosition();
+  motor_rb.resetPosition();
+  motor_lf.rotateFor(forward, time, sec);
+  motor_rf.rotateFor(forward, time, sec);
+  motor_lb.rotateFor(forward, time, sec);
+  motor_rb.spinFor(forward, time, sec);
+}
+
 //move diagonally with a given direction (left/right), distance (in degrees), and a given speed (in rpm)
 void diagonal(turnType dir,double num,double speed){
   motor_lf.resetPosition();
@@ -96,51 +137,28 @@ void diagonal(turnType dir,double num,double speed){
 void turn(turnType dir,double num,double speed){
   motor_lf.resetPosition();
   motor_rf.resetPosition();
+  motor_lm.resetPosition();
+  motor_rm.resetPosition();
   motor_lb.resetPosition();
   motor_rb.resetPosition();
   if(dir==right){
-    motor_lf.startRotateTo(num,deg,speed,rpm);
-    motor_lb.startRotateTo(num,deg,speed,rpm);
-    motor_rf.startRotateTo(-num,deg,speed,rpm);
-    motor_rb.startRotateTo(-num,deg,speed,rpm);
+    num = -num;
   }
-  if(dir==right){
-    motor_lf.startRotateTo(-num,deg,speed,rpm);
-    motor_lb.startRotateTo(-num,deg,speed,rpm);
-    motor_rf.startRotateTo(num,deg,speed,rpm);
-    motor_rb.startRotateTo(num,deg,speed,rpm);
-  }
-}
-//ACCESSORY
-//Activates the suction for a given time and speed
-double rolltime = 1; //time to flip the roller
-//creates a struct
-struct suckargstype{
-  double time;
-  double speed;
-};
-//Main suction code
-int suck(double time, double speed){
-  motor_suc.rotateFor(time,sec,speed,rpm);
-  return 0;
-}
-//Redirects the Suction task to the Main Suction code to be able to use parameters
-int suck(void*args){
-  suckargstype* suckargs = (suckargstype*)args;
-  return suck(suckargs->time,suckargs->speed);
+  motor_lf.startRotateTo(num, deg,speed,rpm);
+  motor_lb.startRotateTo(num,deg,speed,rpm);
+  motor_lm.startRotateTo(num,deg,speed,rpm);
+  motor_lm.startRotateTo(num,deg,speed,rpm);
+  motor_rf.startRotateTo(num,deg,speed,rpm);
+  motor_rb.spinFor(num,deg,speed,rpm);
 }
 
-//Launches a number of discs
-void launch(int num){
-  motor_lau.startRotateFor(20,rev,600,rpm);
-  for(int i=1;i<=num;i++){
-    motor_fli.rotateTo(80,deg,true);
-    wait(100,msec);
-    motor_fli.rotateTo(0,deg,true);
-    wait(100,msec);
-  }
-}
-
+// void flick() {
+//   indexer.set(true);
+  
+//   motor_fli.setVelocity(100, percent);
+//   motor_fli.rotateTo(110,deg,true);
+//   motor_fli.rotateTo(0,deg,true);
+// }
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
@@ -152,23 +170,139 @@ void launch(int num){
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
+//ANAV AUTONS BELOW
+//shoot2ez
+// void autonomous(void) {
+//   ahead(-120, 50);
+//   wait(1, sec);
+//   motor_suc.spin(reverse, 50, percent);
+//   wait(0.3, sec);
+//   motor_suc.stop();
+//   ahead(100, 100);
+//   turn(left, 25, 25);
+//   motor_rf.stop(hold);
+//   motor_lf.stop(hold);
+//   motor_rb.stop(hold);
+//   motor_lb.stop(hold);
+//   motor_lau.spin(vex::forward, 65, vex::percent);
+//   wait(3.7, sec);
+//   flick();
+//   wait(0.9, sec);
+//   flick();
+//   motor_lau.stop(coast);
+//   turn(right, 360, 25);
+// }
+
+//shoot5ez
+// void autonomous(void) {
+//   ahead(-50, 50);
+//   wait(1, sec);
+//   motor_suc.spin(reverse, 50, percent);
+//   wait(0.3, sec);
+//   motor_suc.stop();
+//   ahead(100, 100);
+//   turn(left, 20, 25);
+//   motor_rf.stop(hold);
+//   motor_lf.stop(hold);
+//   motor_rb.stop(hold);
+//   motor_lb.stop(hold);
+//   motor_lau.spin(vex::forward, 11, voltageUnits::volt);
+//   wait(3.3, sec);
+//   flick(); 
+//   wait(0.9, sec);
+//   flick();
+//   motor_lau.stop(coast);            
+//   turn(left, 540, 50);
+//   ahead(-500, 150);
+//   motor_suc.setVelocity(100, percent);
+//   motor_suc.spin(forward);
+//   ahead(-550, 80);
+//   turn(right, 400, 75);
+//   motor_lau.spin(vex::forward, 10, voltageUnits::volt);
+//   wait(2.5, sec);
+//   flick();
+//   motor_lau.spin(vex::forward, 11, voltageUnits::volt);
+//   wait(0.3, sec);
+//   flick();
+//   motor_lau.stop(coast);
+// }
+
+//shoot2long
+// void autonomous(void) {
+//   side(560, 100);
+//   ahead(-160, 50);
+//   wait(1, sec);
+//   motor_suc.spin(reverse, 50, percent);
+//   wait(0.3, sec);
+//   motor_suc.stop();
+//   ahead(100, 100);
+//   turn(right, 90, 25);
+//   motor_rf.stop(hold);
+//   motor_lf.stop(hold);
+//   motor_rb.stop(hold);
+//   motor_lb.stop(hold);
+//   motor_lau.spin(vex::forward, 11, volt);
+//   wait(3.7, sec);
+//   flick();
+//   wait(0.9, sec);
+//   flick();
+//   motor_lau.stop(coast);
+// }
+
+//shoot5long
+// void autonomous(void) {
+//   side(750, 200);
+//   ahead(-120, 50);
+//   wait(1, sec);
+//   motor_suc.spin(reverse, 50, percent);
+//   wait(0.3, sec);
+//   motor_suc.stop();
+//   ahead(100, 100);
+//   turn(right, 25, 25);
+//   motor_rf.stop(hold);
+//   motor_lf.stop(hold);
+//   motor_rb.stop(hold);
+//   motor_lb.stop(hold);
+//   motor_lau.spin(vex::forward, 65, vex::percent);
+//   wait(3.7, sec);
+//   flick();
+//   wait(0.9, sec);
+//   flick();
+//   motor_lau.stop(coast);
+//   turn(right, 100, 25);
+
+// void autonomous(void) {
+//   ahead(-100, 50);
+//   turn(left, 360, 100);
+//   motor_suc.spin(vex::fwd, 100, percent);
+//   ahead(-50, 50);
+//   motor_suc.stop(coast);
+//   ahead(75, 50);
+//   motor_lau.spin(vex::fwd, 100, percent);
+//   turn(left, 720, 100);
+//   motor_suc.spin(vex::fwd, 1000, percent);
+//   indexer.set(true);
+//   wait(65, msec);
+//   indexer.set(false);
+//   wait(300, msec);
+//   indexer.set(true);
+//   wait(65, msec);
+//   indexer.set(false);
+//   wait(300, msec);
+
+
+//   // motor_suc.stop();
+//   // turn(right, 180, 100);
+//   // motor_lau.spin(vex::fwd, 100, percent);
+
+// }
+
 void autonomous(void) {
-  suck(1,200); //Depending on preload, transfers it to the holding bay
-  wait(500,msec);
-  launch(2); //Launches two discs to begin auton winpoint
-  wait(500,msec);
-  turn(right,90,100); //Turns towards roller
-  suck(rolltime,50); //Turns the suction to be able to turn the rollers
-  turn(left,135,100); //Turns back towards 4 discs parallel to main diagonal
-  //creates a struct to allow the task to work while driving
-  suckargstype suckargs;
-  suckargs.time=10;
-  suckargs.speed=200; 
-  task Suction(suck, (void*)&suckargs); //enables the suction while driving
-  ahead(1000,200); //drives along the diagonal to pick up 3 discs
-  turn(right,45,100); //aims at the goal
-  launch(3); //shoots three discs at the goal to allow for autonomous bonus
-  //add more discs if time allows
+  motor_suc.spin(vex::forward, 25, percent);
+  ahead(-100, 100);
+  
+  ahead(100, 50);
+  motor_suc.stop();
 }
 
 /*---------------------------------------------------------------------------*/
@@ -182,52 +316,140 @@ void autonomous(void) {
 /*---------------------------------------------------------------------------*/
 
 void usercontrol(void) {
-  
   // User control code here, inside the loop
-    while (1) {
-    //DRIVE CODE
-    //get the controler inputs
-    int ctrl_right = Controller1.Axis3.position(vex::percent);
-    int ctrl_turn = Controller1.Axis4.position(vex::percent);
-    int ctrl_fwd = Controller1.Axis1.position(vex::percent);
+  motor_lb.setVelocity(100, percent);
+  motor_lf.setVelocity(100, percent);
+  motor_rb.setVelocity(100, percent);
+  motor_rf.setVelocity(100, percent);
+  Controller1.Screen.clearScreen();
+  Controller1.Screen.clearLine();
+  Controller1.Screen.print("suction");
 
-    //clip values close to 0
-    const int deadband = 15;
-    if(abs(ctrl_fwd)<deadband) ctrl_fwd=0;
-    if(abs(ctrl_turn)<deadband) ctrl_turn=0;
-    if(abs(ctrl_right)<deadband) ctrl_right=0;
+  while (1) {
+  //DRIVE CODE
+    
 
     //Set drive motor values
-    int drive_l_front = ctrl_fwd + ctrl_turn + ctrl_right;
-    int drive_l_back  = ctrl_fwd - ctrl_turn - ctrl_right;
- 
-    int drive_r_front = ctrl_fwd + ctrl_turn - ctrl_right;
-    int drive_r_back  = ctrl_fwd - ctrl_turn + ctrl_right;
+    if(Controller1.ButtonX.pressing()) {
+      if(!drivePressed) {
+        driveLaunch = !driveLaunch;
+        drivePressed = true;
+        Controller1.Screen.clearScreen();
+        Controller1.Screen.clearLine();
+        if(driveLaunch) {
+          Controller1.Screen.print("suction");
+        } else {
+          Controller1.Screen.print("launcher");
+        }
+      }
+    } else {
+      drivePressed = false;
+    }
+
+    int forward = Controller1.Axis3.position(vex::percent);
+    int turn = Controller1.Axis1.position(vex::percent);
+    int sideways = Controller1.Axis4.position(vex::percent);
+
+    if(driveLaunch) {
+      forward = -forward;
+      sideways = -sideways;
+    }
 
     //Send final drive values
-    motor_lf.spin( vex::forward, drive_l_front, vex::rpm );
-    motor_lb.spin( vex::forward, drive_l_back , vex::rpm );
-    motor_rf.spin( vex::forward, drive_r_front, vex::rpm );
-    motor_rb.spin( vex::forward, drive_r_back , vex::rpm );
+    motor_lf.spin( vex::forward, -forward + sideways + turn, percent);
+    motor_lm.spin(vex::fwd, -forward + turn, percent);
+    motor_lb.spin( vex::forward, -forward - sideways + turn, percent);
+    motor_rf.spin( vex::forward, forward + sideways + turn, percent);
+    motor_rm.spin(vex::fwd, forward + turn, percent);
+    motor_rb.spin( vex::forward, forward - sideways + turn, percent);
+    // motor_lf.spin( vex::forward, 0.75*(-forward + turn), percent);
+    // motor_lm.spin(vex::fwd, 0.75*(-forward + turn), percent);
+    // motor_lb.spin( vex::forward, 0.75*(-forward + turn), percent);
+    // motor_rf.spin( vex::forward, 0.75*(forward + turn), percent);
+    // motor_rm.spin(vex::fwd, 0.75*(forward + turn), percent);
+    // motor_rb.spin( vex::forward, 0.75*(forward + turn), percent);
 
-    Brain.Screen.clearScreen();
-    Brain.Screen.print(Controller1.Axis3.position());
-    Brain.Screen.print(Controller1.Axis1.position());
-
+    if(forward == 0 && turn == 0) {
+      motor_lb.stop(hold);
+      motor_lf.stop(hold);
+      motor_rb.stop(hold);
+      motor_rf.stop(hold);
+      motor_lm.stop(hold);
+      motor_rm.stop(hold);
+    } if(sideways != 0) {
+      motor_lm.stop(coast);
+      motor_rm.stop(coast);
+    }
     //ACCESSORY
-    //Spins the conveyor belt: L1 forward, L2 backward
-    if(Controller1.ButtonL1.pressing()) motor_suc.spin(vex::forward,100,vex::percent);
-    if(!Controller1.ButtonL1.pressing()&&!Controller1.ButtonL2.pressing()) motor_suc.stop(brake);
-    if(Controller1.ButtonL2.pressing()) motor_suc.spin(vex::forward,-100,vex::pct);
+    //spins sucrtion forward, backward, and stops
+    if(Controller1.ButtonL1.pressing()) {
+      if(!suctionPressed1) {
+        if(suctionCall == 'n') {
+          suctionCall = 'f';
+        } else {
+          suctionCall = 'n';
+        }
+        suctionPressed1 = !suctionPressed1;
+      }
+    } else if(Controller1.ButtonL2.pressing()) {
+      if(!suctionPressed1) {
+        if(suctionCall == 'n') {
+          suctionCall = 'b';
+        } else {
+          suctionCall = 'n';
+        }
+        suctionPressed1 = !suctionPressed1;
+      }
+    } else {
+      suctionPressed1 = false;
+      suctionPressed2 = false;
+    }
 
-    if(Controller1.ButtonR1.pressing()) launch(1);
+    if(suctionCall == 'f') {
+      motor_suc.spin(vex::forward, 100, percent);
+    } else if (suctionCall == 'b') {
+      motor_suc.spin(vex::reverse, 100, percent);
+    } else {
+      motor_suc.stop();
+    }
 
-    //Launches discs
-    
-    
+    //starts the spinning motor to launch
+    if(Controller1.ButtonR1.pressing()) {
+      if(!launcherPressed) {
+        // change the toggle state
+        launcherCall = !launcherCall;
+        // Note the button is pressed
+        launcherPressed = true;
+      }
+    } else {
+      // the button is not pressed
+      launcherPressed = false;
+    }
 
+    if(launcherCall) {
+      motor_lau.setVelocity(100, percent);
+      motor_lau.spin(vex::reverse);
+    } else {
+      motor_lau.stop(coast);
+    }
+    if(Controller1.ButtonR2.pressing())  {
+      indexer.set(true);
+      wait(65, msec);
+      indexer.set(false);
+      wait(100, msec);
+      // indexer.set(false);lll
+      // wait(20, mse ..gy67c);
+    }
+    //flicks the disks so that it can launch
+    // if(Controller1.ButtonR2.pressing()){
+    //   flick();
+    // }
+    if(Controller1.ButtonRight.pressing()) {
+      expansion.set(true);
+    }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
+
   }
 }
 
@@ -236,6 +458,8 @@ void usercontrol(void) {
 //
 int main() {
   // Set up callbacks for autonomous and driver control periods.
+  
+  
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
 
